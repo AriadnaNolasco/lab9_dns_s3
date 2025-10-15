@@ -12,6 +12,12 @@ const upload = multer({ storage: multer.memoryStorage() });
 // Now you access the functions as properties of the imported object:
 router.get('/', adminController.getAdminView); 
 router.post('/product/create', upload.single('productImage'), adminController.createProduct);
-// ... and so on for all routes
+
+// ¡ASEGÚRATE DE QUE ESTA LÍNEA EXISTA Y ESTÉ CORRECTA!
+router.post('/storage/backup', adminController.performBackup); 
+
+// Rutas de Restore y Cambio de Bucket también deben estar:
+router.post('/storage/restore', adminController.performRestore);
+router.post('/storage/change-bucket', adminController.changeActiveBucket);
 
 export default router;
