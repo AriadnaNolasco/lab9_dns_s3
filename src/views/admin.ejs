@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración S3</title>
+    <style>
+        :root {
+            --primary: #3f51b5; /* Azul índigo */
+            --secondary: #f44336; /* Rojo */
+            --accent: #ff9800; /* Naranja */
+            --background: #f4f6f8;
+            --card-bg: #ffffff;
+            --border-color: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background);
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2, h3 {
+            color: var(--primary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 25px;
+        }
+
+        /* --- Mensajes de estado --- */
+        .message-box {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            background-color: #e8f5e9; /* Light Green */
+            color: #2e7d32; /* Dark Green */
+            border: 1px solid #c8e6c9;
+        }
+
+        /* --- Grid de Storage y CRUD --- */
+        .storage-grid, .product-form-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        /* --- Botones --- */
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+            width: 100%; /* Full width in card */
+            margin-top: 10px;
+        }
+
+        .btn-backup {
+            background-color: var(--secondary);
+            color: white;
+        }
+        .btn-backup:hover { background-color: #d32f2f; }
+
+        .btn-restore {
+            background-color: var(--accent);
+            color: white;
+        }
+        .btn-restore:hover { background-color: #fb8c00; }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover { background-color: #303f9f; }
+
+        /* --- Formularios --- */
+        form label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        form input[type="text"], 
+        form input[type="number"], 
+        form input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        /* --- Tabla de Productos --- */
+        .product-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .product-table th, .product-table td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: left;
+        }
+
+        .product-table th {
+            background-color: var(--background);
+            color: var(--primary);
+            font-weight: 700;
+        }
+        
+        .product-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Panel de Administración S3 Products 🛠️</h1>
+
+        <% if (message) { %>
+            <div class="message-box">
+                <%= message %>
+            </div>
+        <% } %>
+
+        <h2>Configuración de Storage ☁️</h2>
+        <p>
+            Bucket Activo: <strong style="color: var(--primary);"><%= activeBucket %></strong>
+        </p>
+
+        <div class="storage-grid">
+
+            <div class="card">
+                <h3>1. Backup y Vaciar Repositorio</h3>
+                <p style="font-size: 0.9em; color: #666;">Copia todas las imágenes del Bucket Activo al Bucket de Backup y luego las **elimina** del activo.</p>
+                <form action="/storage/backup" method="POST">
+                    <button type="submit" class="btn-backup"
+                        onclick="return confirm('⚠️ ¿Está seguro que desea hacer un backup y VACAIR el repositorio activo? Esta acción eliminará los archivos originales.');">
+                        Hacer Backup y Vaciar Repositorio
+                    </button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>2. Restauración de Imágenes</h3>
+                <p style="font-size: 0.9em; color: #666;">Copia todas las imágenes del Bucket de Backup al Bucket Activo para restaurar la funcionalidad de la app.</p>
+                <form action="/storage/restore" method="POST">
+                    <button type="submit" class="btn-restore"
+                        onclick="return confirm('¿Seguro que quiere RESTAURAR las imágenes del bucket de backup?');">
+                        Restaurar Imágenes
+                    </button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>3. Cambiar Storage (Movilidad)</h3>
+                <p style="font-size: 0.9em; color: #666;">Permite cambiar el nombre del bucket de destino para los nuevos archivos (ej. para migrar a un nuevo bucket).</p>
+                <form action="/storage/change-bucket" method="POST">
+                    <label for="newBucket">Nuevo Bucket:</label>
+                    <input type="text" id="newBucket" name="newBucket" placeholder="Ej. nuevo-bucket-destino" required>
+                    <button type="submit" class="btn-primary">Cambiar Bucket Activo</button>
+                </form>
+            </div>
+
+        </div>
+
+        <hr>
+
+        <h2>CRUD de Productos 🛒</h2>
+
+        <div class="product-form-container">
+            <div class="card" style="grid-column: span 1;">
+                <h3>Crear Nuevo Producto</h3>
+                <form action="/product/create" method="POST" enctype="multipart/form-data">
+                    <label for="name">Nombre:</label>
+                    <input type="text" id="name" name="name" required>
+                    
+                    <label for="price">Precio:</label>
+                    <input type="number" id="price" name="price" step="0.01" required>
+                    
+                    <label for="productImage">Imagen (a subir a S3):</label>
+                    <input type="file" id="productImage" name="productImage" accept="image/*" required>
+                    
+                    <button type="submit" class="btn-primary">Crear Producto</button>
+                </form>
+            </div>
+        </div>
+
+        <hr>
+
+        <h3>Lista de Productos Almacenados</h3>
+        <% if (products.length > 0) { %>
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Precio</th>
+                        <th>Imagen URL</th>
+                        <th>Preview</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% products.forEach(product => { %>
+                        <tr>
+                            <td><%= product.id %></td>
+                            <td><%= product.name %></td>
+                            <td>$<%= product.price %></td>
+                            <td><a href="<%= product.imageUrl %>" target="_blank" style="word-break: break-all;">Ver enlace</a></td>
+                            <td>
+                                <img src="<%= product.imageUrl %>" alt="<%= product.name %>" class="product-image">
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+            <% } else { %>
+                <p style="padding: 15px; border: 1px dashed #999; text-align: center;">Aún no hay productos en la base de datos simulada.</p>
+            <% } %>
+
+    </div>
+</body>
+
+</html>
